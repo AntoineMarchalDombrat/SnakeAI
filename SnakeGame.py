@@ -146,6 +146,7 @@ if __name__ == "__main__":
 
     while True:
 
+        #Manual action retourne une action en fonction de la touche tapée
         action = manual_action()
         reward, game_over, score = game.play_step(action)
         print(f"Score: {score}  Reward: {reward}")
@@ -155,7 +156,7 @@ if __name__ == "__main__":
             print("Game Over! Restarting...")
             game.reset()
 
-            
+
         #Verif de fermeture de l'application
         #check_close_window()
 
