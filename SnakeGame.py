@@ -7,11 +7,13 @@ import numpy as np
 pygame.init()
 font = pygame.font.SysFont('arial', 25)
 
+
 class Direction(Enum):
     RIGHT = 1
     LEFT = 2
     UP = 3
     DOWN = 4
+
 
 Point = namedtuple('Point', 'x, y')
 
@@ -22,10 +24,13 @@ BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 20
-SPEED = 10  # Ajustez la vitesse du serpent selon vos préférences
+SPEED = 100  # Ajustez la vitesse du serpent selon vos préférences
+
 
 class SnakeGame:
     def __init__(self, w=640, h=480):
+        self.idGame = 0
+
         self.w = w
         self.h = h
         self.display = pygame.display.set_mode((self.w, self.h))
@@ -44,6 +49,8 @@ class SnakeGame:
         self._place_food()
         self.frame_iteration = 0
 
+    # Renvoie vrai si
+
     def _update_ui(self):
         self.display.fill(BLACK)
         for pt in self.snake:
@@ -53,7 +60,9 @@ class SnakeGame:
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
         text = font.render("Score: " + str(self.score), True, WHITE)
+        textidgame = font.render("N° "+ str(self.idGame),True,WHITE)
         self.display.blit(text, [0, 0])
+        self.display.blit(textidgame, [0,30])
         pygame.display.flip()
 
     def _place_food(self):
@@ -74,6 +83,8 @@ class SnakeGame:
 
     def play_step(self, action):
         self.frame_iteration += 1
+        old_dist_x = abs(self.head.x - self.food.x)
+        old_dist_y = abs(self.head.y - self.food.y)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -82,16 +93,23 @@ class SnakeGame:
         self.snake.insert(0, self.head)
         reward = 0
         game_over = False
+        new_dist_x = abs(self.head.x - self.food.x)
+        new_dist_y = abs(self.head.y - self.food.y)
         if self.is_collision() or self.frame_iteration > 100 * len(self.snake):
             game_over = True
             reward = -10
             return reward, game_over, self.score
-        if self.head == self.food:
+        elif self.head == self.food:
             self.score += 1
             reward = 10
             self._place_food()
-        else:
+
+        else :
             self.snake.pop()
+            if new_dist_x < old_dist_x or new_dist_y < old_dist_y:
+                reward = 1
+
+
         self._update_ui()
         self.clock.tick(SPEED)
         return reward, game_over, self.score
@@ -99,9 +117,9 @@ class SnakeGame:
     def _move(self, action):
         clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clock_wise.index(self.direction)
-        if np.array_equal(action, [1, 0, 0]):  # Tout droit
+        if action == 0:  # Tout droit
             new_dir = clock_wise[idx]
-        elif np.array_equal(action, [0, 1, 0]):  # Tourner à droite
+        elif action == 1:  # Tourner à droite
             next_idx = (idx + 1) % 4
             new_dir = clock_wise[next_idx]
         else:  # [0, 0, 1] c'est-à-dire tourner à gauche
@@ -122,8 +140,10 @@ class SnakeGame:
 
         self.head = Point(x, y)
 
+
 def manual_action():
     keys = pygame.key.get_pressed()
+    # par défaut
     action = [1, 0, 0]
     if keys[pygame.K_UP]:
         action = [0, 0, 1]  # Tourner à gauche
@@ -133,30 +153,9 @@ def manual_action():
         action = [1, 0, 0]  # Tout droit
     return action
 
+
 def check_close_window():
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-
-
-if __name__ == "__main__":
-    #lancement de la partie
-    game = SnakeGame()
-
-    while True:
-
-        #Manual action retourne une action en fonction de la touche tapée
-        action = manual_action()
-        reward, game_over, score = game.play_step(action)
-        print(f"Score: {score}  Reward: {reward}")
-        
-        
-        if game_over:
-            print("Game Over! Restarting...")
-            game.reset()
-
-
-        #Verif de fermeture de l'application
-        #check_close_window()
-
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()
